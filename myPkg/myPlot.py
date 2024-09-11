@@ -73,42 +73,11 @@ def set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend):
         axes.legend(legend)
     axes.grid()
 
-def plot(X, Y=None, xlabel=None, ylabel=None, legend=None, xlim=None,
+
+def plot(X, Y=None,Yerr=None, xlabel=None, ylabel=None, legend=None, titles=None, xlim=None,
          ylim=None, xscale='linear', yscale='linear',
-         fmts=('-', 'm--', 'g-.', 'r:'), figsize=(3.5, 2.5), axes=None):
-    """Plot data points.
-
-    Defined in :numref:`sec_calculus`"""
-    if legend is None:
-        legend = []
-
-    set_figsize(figsize)
-    axes = axes if axes else d2l.plt.gca()
-
-    # Return True if `X` (tensor or list) has 1 axis
-    def has_one_axis(X):
-        return (hasattr(X, "ndim") and X.ndim == 1 or isinstance(X, list)
-                and not hasattr(X[0], "__len__"))
-
-    if has_one_axis(X):
-        X = [X]
-    if Y is None:
-        X, Y = [[]] * len(X), X
-    elif has_one_axis(Y):
-        Y = [Y]
-    if len(X) != len(Y):
-        X = X * len(Y)
-    axes.cla()
-    for x, y, fmt in zip(X, Y, fmts):
-        if len(x):
-            axes.plot(x, y, fmt)
-        else:
-            axes.plot( y, fmt)
-    set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
-
-def plot_errbar(X, Y=None,Yerr=None, xlabel=None, ylabel=None, legend=None, xlim=None,
-         ylim=None, xscale='linear', yscale='linear',
-         fmts=('-', 'm--', 'g-.', 'r:'), figsize=(3.5, 2.5), axes=None):
+         fmts = ['-', 'm--', 'g-.', 'r:', 'b-o', 'c--s', 'k-.^', 'y:v', 'g-*', 'r-d'],
+        figsize=(3.5, 2.5), axes=None):
     """Plot data points with errorbar.
 
     
@@ -132,20 +101,136 @@ def plot_errbar(X, Y=None,Yerr=None, xlabel=None, ylabel=None, legend=None, xlim
     if len(X) != len(Y):
         X = X * len(Y)
     axes.cla()
-    for x, y,yerr, fmt in zip(X, Y,Yerr, fmts):
 
-        # print(x)
-        # print(y)
-        # print(yerr)
-        if len(x):
-            axes.errorbar(x, y,yerr=yerr, fmt=fmt)
-        else:
-            axes.errorbar( y,yerr=yerr, fmt=fmt)
+    if Yerr is None:
+        for x, y, fmt in zip(X, Y, fmts):
+            if len(x):
+                axes.plot(x, y, fmt)
+            else:
+                axes.plot( y, fmt)
+    else:
+        for x, y,yerr, fmt in zip(X, Y,Yerr, fmts):
+            if len(x):
+                axes.errorbar(x, y,yerr=yerr, fmt=fmt)
+            else:
+                axes.errorbar( y,yerr=yerr, fmt=fmt)
+    if titles:
+        axes.set_title(titles)
     set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
 
 
+def fft_analysis(data,sample_rate):
+    """fft 
+    data: nch*nsample
+    
+    """
+    """
+    Compute the FFT of 9 signals and return the frequency components.
+
+    Parameters:
+    - data: numpy array of shape (9, 1000), where each row is a signal
+    - sample_rate: the sample rate of the signals (default is 1000 Hz)
+
+    Returns:
+    - frequencies: the frequency bins corresponding to the FFT
+    - fft_data: the FFT-transformed data
+    """
+    if data.ndim == 1:
+        # Perform FFT on each of the 9 signals (rows)
+        N = data.shape[0]
+        fft_data = np.fft.fft(data)/data.shape
+        y = 2*np.abs(fft_data[:N//2])
+
+    elif data.ndim == 2:
+        # Check if data is of the correct shape
+        if data.shape[0]>= data.shape[1]:
+            raise ValueError("Input data shape error")
+
+        # Perform FFT on each of the 9 signals (rows)
+        fft_data = np.fft.fft(data, axis=1)/data.shape[1]
+       
+        # Get the corresponding frequencies
+        N = data.shape[1]  # Number of points in each signal
+        
+        y = 2*np.abs(fft_data[:, :N//2])
+
+                     
+    T = 1.0 / sample_rate  # Sample spacing
+    frequencies = np.fft.fftfreq(N, T)
+    f = frequencies[:N//2]
+    # Return the frequencies and FFT data
+    return f, y
+
+def generate_accuracy_data(num_points=20, initial_accuracy=0.5, final_accuracy=0.95, noise_level=0.02):
+    """
+    Generate a dataset with increasing accuracy over time.
+
+    Parameters:
+    - num_points: Number of time points (default is 20)
+    - initial_accuracy: The starting accuracy value (default is 0.5)
+    - final_accuracy: The final accuracy value at the end (default is 0.95)
+    - noise_level: The amount of noise to add to the accuracy (default is 0.02)
+
+    Returns:
+    - time_points: numpy array of time points
+    - accuracies: numpy array of accuracy values that increase over time
+    """
+    # Generate time points (e.g., time step indices)
+    time_points = np.arange(num_points)
+    
+    # Linearly increase accuracy from initial to final value
+    accuracies = np.linspace(initial_accuracy, final_accuracy, num_points)
+    
+    # Add some random noise for realism
+    noise = np.random.normal(0, noise_level, num_points)
+    accuracies += noise
+    
+    # Ensure accuracies stay within [0, 1] bounds
+    accuracies = np.clip(accuracies, 0, 1)
+    
+    return time_points, accuracies
 
 
+def generate_multiple_accuracy_data(num_groups=10, num_points=20):
+    """
+    Generate multiple sets of accuracy data over time.
+
+    Parameters:
+    - num_groups: Number of accuracy data sets (default is 10)
+    - num_points: Number of time points for each set (default is 20)
+
+    Returns:
+    - all_accuracies: numpy array of shape (num_groups, num_points) with accuracy data
+    """
+    all_accuracies = np.zeros((num_groups, num_points))
+
+    for i in range(num_groups):
+        time_points,all_accuracies[i, :] = generate_accuracy_data(num_points)
+
+    return time_points,all_accuracies
+    
+    
+def generate_sine_data(num_signals=9, num_samples=1000, sample_rate=1000):
+    """
+    Generate sine wave data with different frequencies for each signal.
+
+    Parameters:
+    - num_signals: Number of sine wave signals to generate (default is 9)
+    - num_samples: Number of samples per signal (default is 1000)
+    - sample_rate: Sampling rate in Hz (default is 1000)
+
+    Returns:
+    - data: numpy array of shape (num_signals, num_samples) containing the sine wave signals
+    """
+    t = np.linspace(0, num_samples / sample_rate, num_samples, endpoint=False)  # Time vector
+    data = np.zeros((num_signals, num_samples))  # Initialize the data array
+
+    # Generate sine waves with increasing frequencies for each signal
+    for i in range(num_signals):
+        frequency = (i + 1) * 10  # Set different frequencies for each signal (e.g., 10, 20, 30,... Hz)
+        data[i, :] = np.sin(2 * np.pi * frequency * t)
+
+    return t,data
 
 class Timer:
     """Record multiple running times."""
