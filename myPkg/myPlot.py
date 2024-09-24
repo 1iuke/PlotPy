@@ -34,6 +34,7 @@ import requests
 from IPython import display
 from matplotlib import pyplot as plt
 from matplotlib_inline import backend_inline
+plt.rcParams['font.family'] = 'SimHei'  # 替换为你选择的字体
 
 d2l = sys.modules[__name__]
 # print(d2l)
@@ -59,6 +60,23 @@ def set_figsize(figsize=(3.5, 2.5)):
     use_svg_display()
     d2l.plt.rcParams['figure.figsize'] = figsize
 
+
+
+colors=["#2C6344", "#5F9C61", "#A4C97c", "#61496D", "#B092B6", "#CAC1D4", "#C74D26","#E38D26", "#F1CC74", "#308192", "#5EA7B8", "#AED2E2"]   
+colors142=["#08306B", "#08519C", "#2171B5", "#6BAED6", "#C6DBEF", "#FED976", "#FFFFCC", "#969696", "#D95319", "#EDB120", "#0072BD", "#77AC30"]   
+
+
+
+def set_colors(colors):
+    if colors == "viridis":
+        colors = plt.cm.viridis(np.linspace(0, 1, 12))  # 使用 viridis 颜色图
+    elif colors == "jet":
+        colors = plt.cm.jet(np.linspace(0, 1, 12))  # 使用 viridis 颜色图
+    elif colors == "summer":
+        colors = plt.cm.summer(np.linspace(0, 1, 12))  # 使用 viridis 颜色图
+
+    return colors[::-1]
+
 def set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend):
     """Set the axes for matplotlib.
 
@@ -70,13 +88,16 @@ def set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend):
     axes.set_xlim(xlim)
     axes.set_ylim(ylim)
     if legend:
-        axes.legend(legend)
+        axes.legend(legend,prop = {'size':8},bbox_to_anchor=(1.05, 0), loc=3, borderaxespad=0)
     axes.grid()
 
 
-def plot(X, Y=None,Yerr=None, xlabel=None, ylabel=None, legend=None, titles=None, xlim=None,saveName = None,
+def plot(X, Y=None,Yerr=None, xlabel=None, ylabel=None, legend=None, titles=None,       xlim=None,saveName = None,
          ylim=None, xscale='linear', yscale='linear', markersize=2,capsize=2,
-         fmts = ['-', 'm--', 'g-.', 'r:', 'b-o', 'c--s', 'k-.^', 'y:v', 'g-*', 'r-d'],
+         linestyles = ['-', '--', ':', '-.']*4,
+         colors = "viridis",
+         markers = ['o', 's', '^', 'D', 'x', '+', 'P', '*', '<', '>', '1', '2'],
+
         figsize=(3.5, 2.5), axes=None):
     """Plot data points with errorbar.
 
@@ -85,6 +106,11 @@ def plot(X, Y=None,Yerr=None, xlabel=None, ylabel=None, legend=None, titles=None
     if legend is None:
         legend = []
     set_figsize(figsize)
+
+    if(colors):
+        colors = set_colors(colors)
+
+
     axes = axes if axes else d2l.plt.gca()
 
     # Return True if `X` (tensor or list) has 1 axis
@@ -103,17 +129,20 @@ def plot(X, Y=None,Yerr=None, xlabel=None, ylabel=None, legend=None, titles=None
     axes.cla()
 
     if Yerr is None:
-        for x, y, fmt in zip(X, Y, fmts):
+        for x, y, color,ls,mk in zip(X, Y, colors,linestyles,markers):
+
+            fmt = ls+mk
             if len(x):
-                axes.plot(x, y, fmt,capsize=capsize, markersize=markersize)
+                axes.plot(x, y, fmt,capsize=capsize, markersize=markersize,color=color)
             else:
-                axes.plot( y, fmt,capsize=capsize, markersize=markersize)
+                axes.plot( y, fmt,capsize=capsize, markersize=markersize,color=color)
     else:
-        for x, y,yerr, fmt in zip(X, Y,Yerr, fmts):
+        for x, y,yerr, color,ls,mk in zip(X, Y,Yerr, colors,linestyles,markers):
+            fmt = ls+mk
             if len(x):
-                axes.errorbar(x, y,yerr=yerr, fmt=fmt,capsize=capsize, markersize=markersize)
+                axes.errorbar(x, y,yerr=yerr, fmt=fmt,capsize=capsize, markersize=markersize,color=color)
             else:
-                axes.errorbar( y,yerr=yerr, fmt=fmt,capsize=capsize, markersize=markersize)
+                axes.errorbar( y,yerr=yerr, fmt=fmt,capsize=capsize, markersize=markersize,color=color)
     if titles:
         axes.set_title(titles)
     set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
