@@ -33,6 +33,9 @@ import pandas as pd
 import requests
 from IPython import display
 from matplotlib import pyplot as plt
+from matplotlib.lines import Line2D
+from matplotlib.markers import MarkerStyle
+
 from matplotlib_inline import backend_inline
 plt.rcParams['font.family'] = 'SimHei'  # 替换为你选择的字体
 
@@ -65,6 +68,29 @@ def set_figsize(figsize=(3.5, 2.5)):
 colors=["#2C6344", "#5F9C61", "#A4C97c", "#61496D", "#B092B6", "#CAC1D4", "#C74D26","#E38D26", "#F1CC74", "#308192", "#5EA7B8", "#AED2E2"]   
 colors142=["#08306B", "#08519C", "#2171B5", "#6BAED6", "#C6DBEF", "#FED976", "#FFFFCC", "#969696", "#D95319", "#EDB120", "#0072BD", "#77AC30"]   
 
+linestyle_tuple = [
+     ('loosely dotted',        (0, (1, 10))),
+     ('dotted',                (0, (1, 1))),
+     # ('densely dotted',        (0, (1, 1))),
+     ('long dash with offset', (5, (10, 3))),
+     ('loosely dashed',        (0, (5, 10))),
+     ('dashed',                (0, (5, 5))),
+     ('densely dashed',        (0, (5, 1))),
+
+     ('loosely dashdotted',    (0, (3, 10, 1, 10))),
+     ('dashdotted',            (0, (3, 5, 1, 5))),
+     ('densely dashdotted',    (0, (3, 1, 1, 1))),
+
+     ('dashdotdotted',         (0, (3, 5, 1, 5, 1, 5))),
+     ('loosely dashdotdotted', (0, (3, 10, 1, 10, 1, 10))),
+     ('densely dashdotdotted', (0, (3, 1, 1, 1, 1, 1)))]
+def split_list(a_list):
+    i_half = len(a_list) // 2
+    return a_list[:i_half], a_list[i_half:]
+
+linestyles = [t[1] for t in linestyle_tuple]
+# print(linestyles)
+markers =[t[1] for t in split_list(Line2D.filled_markers)] 
 
 
 def set_colors(colors):
@@ -94,7 +120,8 @@ def set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend):
 
 def plot(X, Y=None,Yerr=None, xlabel=None, ylabel=None, legend=None, titles=None,       xlim=None,saveName = None,
          ylim=None, xscale='linear', yscale='linear', markersize=2,capsize=2,
-         linestyles = ['-', '--', ':', '-.']*4,
+         linestyles = linestyles,
+         # linestyles = ['-', '--', ':', '-.']*4,
          colors = "viridis",
          markers = ['o', 's', '^', 'D', 'x', '+', 'P', '*', '<', '>', '1', '2'],
 
@@ -109,8 +136,9 @@ def plot(X, Y=None,Yerr=None, xlabel=None, ylabel=None, legend=None, titles=None
 
     if(colors):
         colors = set_colors(colors)
-
-
+    # linestylename,linestyle = linestyle_tuple[0]
+  
+        
     axes = axes if axes else d2l.plt.gca()
 
     # Return True if `X` (tensor or list) has 1 axis
@@ -131,18 +159,18 @@ def plot(X, Y=None,Yerr=None, xlabel=None, ylabel=None, legend=None, titles=None
     if Yerr is None:
         for x, y, color,ls,mk in zip(X, Y, colors,linestyles,markers):
 
-            fmt = ls+mk
+            # fmt = ls+mk
             if len(x):
-                axes.plot(x, y, fmt,capsize=capsize, markersize=markersize,color=color)
+                axes.plot(x, y, linestyle = ls, marker = mk ,capsize=capsize, markersize=markersize,color=color)
             else:
-                axes.plot( y, fmt,capsize=capsize, markersize=markersize,color=color)
+                axes.plot( y, linestyle = ls, marker = mk,capsize=capsize, markersize=markersize,color=color)
     else:
         for x, y,yerr, color,ls,mk in zip(X, Y,Yerr, colors,linestyles,markers):
-            fmt = ls+mk
+            # fmt = ls+mk
             if len(x):
-                axes.errorbar(x, y,yerr=yerr, fmt=fmt,capsize=capsize, markersize=markersize,color=color)
+                axes.errorbar(x, y,yerr=yerr, linestyle = ls, marker = mk,capsize=capsize, markersize=markersize,color=color)
             else:
-                axes.errorbar( y,yerr=yerr, fmt=fmt,capsize=capsize, markersize=markersize,color=color)
+                axes.errorbar( y,yerr=yerr, linestyle = ls, marker = mk,capsize=capsize, markersize=markersize,color=color)
     if titles:
         axes.set_title(titles)
     set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
